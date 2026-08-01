@@ -387,14 +387,17 @@ def detection_worker():
             print(f'[Detection] native raw result: {raw[:200]}')
             payload = json.loads(raw)
             if isinstance(payload, list):
-                boxes = [(float(x1), float(y1), float(x2), float(y2), float(conf), int(label)) for x1, y1, x2, y2, conf, label in payload]
+                # 修正点：逐个字典提取键值
+                boxes = [(float(d['x1']), float(d['y1']), float(d['x2']), float(d['y2']), float(d['conf']), int(d['label'])) 
+                        for d in payload]
                 print(f'[Detection] parsed boxes: {boxes}')
                 return boxes
+            else:
+                print(f'[Detection] unexpected payload type: {type(payload)}')
         except Exception as exc:
             print(f'[Detection] native bridge failed: {exc}')
             traceback.print_exc()
         return None
-
     prev_time = time.time()
     last_detection_run = time.time()
     frame_count = 0
