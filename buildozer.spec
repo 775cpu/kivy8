@@ -44,6 +44,7 @@ android.archs = arm64-v8a
 
 # 源码目录配置
 android.add_src = android_src
+android.add_assets = %(source.dir)s/android_src/assets
 
 # JNI/CMake 构建配置
 android.gradle_dependencies = androidx.appcompat:appcompat:1.6.1

@@ -5,6 +5,8 @@
 
 #include "cpu.h"
 
+#include <android/log.h>
+
 static float fast_exp(float x)
 {
     union {
@@ -125,6 +127,12 @@ static void generate_grids_and_stride(const int target_w, const int target_h, st
 }
 static void generate_proposals(std::vector<GridAndStride> grid_strides, const ncnn::Mat& pred, float prob_threshold, std::vector<Object>& objects)
 {
+    if (pred.empty() || pred.w <= 0 || pred.h <= 0 || pred.c <= 0)
+    {
+        __android_log_print(ANDROID_LOG_ERROR, "Yolo", "generate_proposals: invalid prediction tensor w=%d h=%d c=%d", pred.w, pred.h, pred.c);
+        return;
+    }
+
     const int num_points = grid_strides.size();
     const int num_class = 80;
     const int reg_max_1 = 16;
@@ -235,8 +243,19 @@ int Yolo::load(AAssetManager* mgr, const char* modeltype, int _target_size, cons
     sprintf(parampath, "yolov8%s.param", modeltype);
     sprintf(modelpath, "yolov8%s.bin", modeltype);
 
-    yolo.load_param(mgr, parampath);
-    yolo.load_model(mgr, modelpath);
+    int ret = yolo.load_param(mgr, parampath);
+    if (ret != 0)
+    {
+        __android_log_print(ANDROID_LOG_ERROR, "Yolo", "load_param failed for %s ret=%d", parampath, ret);
+        return ret;
+    }
+
+    ret = yolo.load_model(mgr, modelpath);
+    if (ret != 0)
+    {
+        __android_log_print(ANDROID_LOG_ERROR, "Yolo", "load_model failed for %s ret=%d", modelpath, ret);
+        return ret;
+    }
 
     target_size = _target_size;
     mean_vals[0] = _mean_vals[0];
@@ -288,7 +307,12 @@ int Yolo::detect(const cv::Mat& rgb, std::vector<Object>& objects, float prob_th
     std::vector<Object> proposals;
     
     ncnn::Mat out;
-    ex.extract("output", out);
+    int ret = ex.extract("output", out);
+    if (ret != 0 || out.empty() || out.w <= 0 || out.h <= 0 || out.c <= 0)
+    {
+        __android_log_print(ANDROID_LOG_ERROR, "Yolo", "detect: extract output failed ret=%d out=(w=%d h=%d c=%d)", ret, out.w, out.h, out.c);
+        return -1;
+    }
 
     std::vector<int> strides = {8, 16, 32}; // might have stride=64
     std::vector<GridAndStride> grid_strides;

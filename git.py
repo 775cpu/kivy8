@@ -454,15 +454,15 @@ def main():
     default_git = os.environ.get("GIT_PATH", "git")
     default_branch = os.environ.get("BRANCH", "master")
 
-    parser = argparse.ArgumentParser(description="CQ-editor Git Auto LFS Tool")
+    parser = argparse.ArgumentParser(description="Git Auto LFS Tool")
     parser.add_argument("--git", default=default_git, help="git 可执行文件路径")
-    parser.add_argument("--branch", default=default_branch, help="分支名称")
+    parser.add_argument("--branch",'-b', default=default_branch, help="分支名称")
     parser.add_argument("--size",'-s', default="100mb", help="大文件大小限制（支持 100mb, 50m, 1g 等，默认 100mb）")
     parser.add_argument("--threshold", type=int, default=0, help="（兼容项）字节数阈值")
     parser.add_argument("--hashes", "--hash", default="", help="手动要清理的 Blob Hash（多个用逗号隔开）")
     parser.add_argument("--remote", default="", help="完整远程 URL")
     parser.add_argument("--auth", help="认证信息 user:token")
-    parser.add_argument("--commit-msg", default="auto update", help="自定义 commit 消息")
+    parser.add_argument("--commit-msg",'-m', default="auto update", help="自定义 commit 消息")
     parser.add_argument("mode", choices=["push", "pull", "init", "list-big", "listbig", "remove-big", "filter-repo"], help="操作模式")
 
     args, extra = parser.parse_known_args()

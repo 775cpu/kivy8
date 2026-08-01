@@ -4,6 +4,14 @@
 *.aab
 *.aar
 *.a
+*.dex
+*.class
+build/
+.gradle/
+local.properties
+*.iml
+.cxx/
+.externalNativeBuild/
 
 # Python
 __pycache__/
@@ -26,3 +34,30 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Native objects
+*.o
+*.obj
+*.out
+*.exe
+*.dll
+*.dylib
+
+# Secrets
+*.keystore
+*.jks
+*.p12
+*.pfx
+*.pem
+*.crt
+*.key
+
+# Cache / tests
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.cache/
+*.coverage
+*.coverage.*
+Pipfile.lock
+poetry.lock
