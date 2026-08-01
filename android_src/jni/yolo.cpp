@@ -5,7 +5,11 @@
 
 #include "cpu.h"
 
+#include <android/asset_manager.h>
 #include <android/log.h>
+
+#include <string>
+#include <vector>
 
 static float fast_exp(float x)
 {
@@ -218,6 +222,48 @@ Yolo::Yolo()
     workspace_pool_allocator.set_size_compare_ratio(0.f);
 }
 
+namespace {
+
+bool try_load_model_assets(ncnn::Net& net, AAssetManager* mgr, const char* modeltype, std::string& used_param_path, std::string& used_model_path)
+{
+    const std::vector<std::string> prefixes = {
+        "",
+        "android_src/assets/",
+        "assets/",
+        "android_src/",
+    };
+
+    for (const auto& prefix : prefixes)
+    {
+        const std::string parampath = prefix + "yolov8" + modeltype + ".param";
+        const std::string modelpath = prefix + "yolov8" + modeltype + ".bin";
+        __android_log_print(ANDROID_LOG_INFO, "Yolo", "trying asset paths param=%s model=%s", parampath.c_str(), modelpath.c_str());
+
+        net.clear();
+        int ret = net.load_param(mgr, parampath.c_str());
+        if (ret != 0)
+        {
+            __android_log_print(ANDROID_LOG_WARN, "Yolo", "load_param failed for %s ret=%d", parampath.c_str(), ret);
+            continue;
+        }
+
+        ret = net.load_model(mgr, modelpath.c_str());
+        if (ret != 0)
+        {
+            __android_log_print(ANDROID_LOG_WARN, "Yolo", "load_model failed for %s ret=%d", modelpath.c_str(), ret);
+            continue;
+        }
+
+        used_param_path = parampath;
+        used_model_path = modelpath;
+        __android_log_print(ANDROID_LOG_INFO, "Yolo", "loaded model assets from %s and %s", parampath.c_str(), modelpath.c_str());
+        return true;
+    }
+
+    return false;
+}
+
+} // namespace
 
 int Yolo::load(AAssetManager* mgr, const char* modeltype, int _target_size, const float* _mean_vals, const float* _norm_vals, bool use_gpu)
 {
@@ -238,23 +284,12 @@ int Yolo::load(AAssetManager* mgr, const char* modeltype, int _target_size, cons
     yolo.opt.blob_allocator = &blob_pool_allocator;
     yolo.opt.workspace_allocator = &workspace_pool_allocator;
 
-    char parampath[256];
-    char modelpath[256];
-    sprintf(parampath, "yolov8%s.param", modeltype);
-    sprintf(modelpath, "yolov8%s.bin", modeltype);
-
-    int ret = yolo.load_param(mgr, parampath);
-    if (ret != 0)
+    std::string used_param_path;
+    std::string used_model_path;
+    if (!try_load_model_assets(yolo, mgr, modeltype, used_param_path, used_model_path))
     {
-        __android_log_print(ANDROID_LOG_ERROR, "Yolo", "load_param failed for %s ret=%d", parampath, ret);
-        return ret;
-    }
-
-    ret = yolo.load_model(mgr, modelpath);
-    if (ret != 0)
-    {
-        __android_log_print(ANDROID_LOG_ERROR, "Yolo", "load_model failed for %s ret=%d", modelpath, ret);
-        return ret;
+        __android_log_print(ANDROID_LOG_ERROR, "Yolo", "all model asset candidates failed for modeltype=%s", modeltype);
+        return -1;
     }
 
     target_size = _target_size;
