@@ -1,0 +1,70 @@
+[app]
+title = hualing
+package.name = hualing
+package.domain = qgb
+source.dir = .
+source.include_exts = py,png,jpg,kv,atlas,bin,param
+
+# 只打包运行时必需资源；避免把 Android 子工程、Gradle 缓存和 build 输出塞进 assets/private.tar
+source.exclude_dirs = androidBLE,bin,.buildozer,YOLOv8-Mobile,.gradle,.idea,__pycache__,.pytest_cache
+
+# 1. 图标主参数：控制桌面图标 (生成 res/mipmap/icon.png)
+icon.filename = %(source.dir)s/android_src/splash.png
+
+# 2. 开屏图主参数：控制开屏 loading 核心图
+presplash.filename = %(source.dir)s/android_src/splash.png
+
+# 3. 补全自适应图标，防止新系统降级去调用灰蓝色遗留图标
+icon.adaptive_foreground.filename = %(source.dir)s/android_src/splash.png
+icon.adaptive_background.filename = %(source.dir)s/android_src/splash.png
+
+# 4. 开屏背景底色
+android.presplash_color = #F1F2F3
+
+# ---------------------------------------------------------------------------
+# 💥 彻底干掉 4 张灰蓝色残留的核心参数（利用 Buildozer 编译后期覆盖机制）：
+# ---------------------------------------------------------------------------
+# 放弃脆弱的 p4a.extra_args，改用官方首选的本地资源注入挂载点。
+# 它会直接把你本地 android_src/res/drawable-* 下的蓝色 ic_launcher 强制替换进最终产物。
+android.output_res_dir = %(source.dir)s/android_src/res
+android.res_dir = %(source.dir)s/android_src/res
+
+version = 0.1
+requirements = hostpython3==3.11.9,python3==3.11.9,numpy,kivy,pyjnius,pillow,ipython,dill
+p4a.local_recipes = %(source.dir)s/android_src
+# opencv_python opencv_python_headless 会造成体积巨大 cv2.abi3.so  (70.45 MB)，
+# onnxruntime 动态库（.so 文件）直接打包进了 ARM64（手机 CPU 架构）的 APK 里。当 Android 手机（ARM64）尝试加载这个动态库时，系统的 dlopen 识别到 CPU 架构不匹配（e_machine: 62 代表 x86_64，而 ARM64 应该是 183），从而拒绝加载
+android.pip_upgrade = False
+
+
+android.permissions = INTERNET,BLUETOOTH_ADMIN,BLUETOOTH,BLUETOOTH_SCAN,BLUETOOTH_CONNECT,CAMERA,READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE,ACCESS_FINE_LOCATION,ACCESS_COARSE_LOCATION,ACCESS_BACKGROUND_LOCATION,ACCESS_WIFI_STATE,CHANGE_WIFI_STATE,RECORD_AUDIO,POST_NOTIFICATIONS,READ_MEDIA_IMAGES,READ_MEDIA_VIDEO,READ_MEDIA_AUDIO,REQUEST_INSTALL_PACKAGES,FOREGROUND_SERVICE,FOREGROUND_SERVICE_LOCATION,WAKE_LOCK,RECEIVE_BOOT_COMPLETED,READ_PHONE_STATE
+orientation = portrait
+fullscreen = 1
+android.archs = arm64-v8a
+
+# 源码目录配置
+android.add_src = android_src
+
+# JNI/CMake 构建配置
+android.gradle_dependencies = androidx.appcompat:appcompat:1.6.1
+android.cmake = True
+android.ndk_cmake = True
+android.extra_cmake_args = -DANDROID_STL=c++_shared
+
+# 【降级维稳】强制锁定 NDK 版本，避免 r28c 带来的编译工具链崩溃
+android.ndk = 25b
+android.sdk = 34
+
+android.allow_backup = True
+android.accept_sdk_license = True
+android.skip_update = False
+# androidx.appcompat 1.7.0 需要至少 API 34 的 compileSdk，避免 AAR metadata 检查失败
+android.api = 34
+android.minapi = 24
+#  21=Android 5.0  24=Android7.0【numpy要求】
+android.ndk_api = 24
+android.private_storage = True
+
+[buildozer]
+log_level = 2
+warn_on_root = 1
