@@ -352,7 +352,30 @@ int Yolo::detect(const cv::Mat& rgb, std::vector<Object>& objects, float prob_th
     std::vector<int> strides = {8, 16, 32}; // might have stride=64
     std::vector<GridAndStride> grid_strides;
     generate_grids_and_stride(in_pad.w, in_pad.h, strides, grid_strides);
-    generate_proposals(grid_strides, out, prob_threshold, proposals);
+
+    std::vector<float> thresholds = {prob_threshold, 0.005f, 0.01f, 0.02f, 0.05f, 0.1f};
+    bool found_proposals = false;
+    float used_prob_threshold = prob_threshold;
+    for (float threshold : thresholds)
+    {
+        proposals.clear();
+        generate_proposals(grid_strides, out, threshold, proposals);
+        __android_log_print(ANDROID_LOG_INFO, "Yolo", "detect: threshold=%.3f candidates=%d out=(w=%d h=%d c=%d)", threshold, (int)proposals.size(), out.w, out.h, out.c);
+        if (!proposals.empty())
+        {
+            used_prob_threshold = threshold;
+            found_proposals = true;
+            break;
+        }
+    }
+
+    if (!found_proposals)
+    {
+        __android_log_print(ANDROID_LOG_WARN, "Yolo", "detect: no proposals above any fallback threshold for this frame");
+        return 0;
+    }
+
+    __android_log_print(ANDROID_LOG_INFO, "Yolo", "detect: selected threshold=%.3f proposals=%d", used_prob_threshold, (int)proposals.size());
 
     // sort all proposals by score from highest to lowest
     qsort_descent_inplace(proposals);

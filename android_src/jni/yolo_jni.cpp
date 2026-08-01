@@ -73,7 +73,9 @@ jstring run_detection_impl(JNIEnv* env, jobject thiz, jbyteArray frame, jint wid
     }
 
     const int y_size = width * height;
-    if (len < y_size) {
+    const int nv21_size = y_size + y_size / 2;
+    if (len < nv21_size) {
+        __android_log_print(ANDROID_LOG_WARN, LOG_TAG, "run_detection_impl: frame too short len=%d expected=%d", len, nv21_size);
         env->ReleaseByteArrayElements(frame, data, JNI_ABORT);
         return env->NewStringUTF("[]");
     }

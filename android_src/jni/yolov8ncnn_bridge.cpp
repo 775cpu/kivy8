@@ -88,9 +88,8 @@ std::string run_yolov8_style_detection(const uint8_t* frame, int width, int heig
         return "[]";
     }
 
-    cv::Mat yuv(height + height / 2, width, CV_8UC1, const_cast<uint8_t*>(frame));
-    cv::Mat rgb;
-    cv::cvtColor(yuv, rgb, cv::COLOR_YUV2RGB_NV21);
+    cv::Mat rgb(height, width, CV_8UC3);
+    ncnn::yuv420sp2rgb(frame, width, height, rgb.data);
 
     std::vector<Object> objects;
     g_yolo->detect(rgb, objects);
