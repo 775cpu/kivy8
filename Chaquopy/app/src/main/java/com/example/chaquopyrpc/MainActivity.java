@@ -6,6 +6,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 import com.chaquo.python.PyObject;
@@ -15,6 +16,8 @@ import com.chaquo.python.android.AndroidPlatform;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.io.FileWriter;
+import java.io.IOException;
 
 public class MainActivity extends Activity {
     private static MainActivity instance;
@@ -39,8 +42,15 @@ public class MainActivity extends Activity {
         logView.setTypeface(android.graphics.Typeface.MONOSPACE);
         logView.setPadding(24, 24, 24, 24);
         logView.setBackgroundColor(0xff101418);
+        logView.setTextIsSelectable(true);
+        logView.setHorizontallyScrolling(true);
+        logView.setVerticalScrollBarEnabled(true);
         logView.setText("Starting Chaquopy RPC...\n");
-        setContentView(logView);
+        ScrollView scrollView = new ScrollView(this);
+        scrollView.setFillViewport(true);
+        scrollView.setBackgroundColor(0xff101418);
+        scrollView.addView(logView);
+        setContentView(scrollView);
 
         logFile = new File(getFilesDir(), "rpc.log");
         startRpc();
@@ -49,16 +59,18 @@ public class MainActivity extends Activity {
 
     public static void setLogBackgroundColor(final String color) {
         if (instance == null) {
-            throw new IllegalStateException("MainActivity is not running");
+            return;
+        }
+        final int parsedColor;
+        try {
+            parsedColor = android.graphics.Color.parseColor(color);
+        } catch (IllegalArgumentException error) {
+            instance.appendLogFile("[RPC ERROR] Invalid background color '" + color
+                    + "'. Use #RRGGBB or #AARRGGBB. Details: " + error + "\n");
+            return;
         }
         instance.runOnUiThread(() -> {
-            try {
-                instance.logView.setBackgroundColor(
-                        android.graphics.Color.parseColor(color)
-                );
-            } catch (IllegalArgumentException error) {
-                throw new RuntimeException("Invalid color: " + color, error);
-            }
+            instance.logView.setBackgroundColor(parsedColor);
         });
     }
 
@@ -95,6 +107,15 @@ public class MainActivity extends Activity {
 
     private void appendLog(String message) {
         logView.append(message);
+    }
+
+    private void appendLogFile(String message) {
+        try (FileWriter writer = new FileWriter(logFile, true)) {
+            writer.write(message);
+            writer.flush();
+        } catch (IOException error) {
+            appendLog("[JAVA] Cannot write RPC error: " + error + "\n");
+        }
     }
 
     @Override
