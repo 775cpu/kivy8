@@ -27,6 +27,7 @@ public class MainActivity extends Activity {
     private static MainActivity instance;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private EditText logView;
+    private ScrollView logScrollView;
     private File logFile;
     private Python python;
 
@@ -45,9 +46,6 @@ public class MainActivity extends Activity {
         logView.setTextSize(12);
         logView.setTypeface(android.graphics.Typeface.MONOSPACE);
         logView.setPadding(24, 24, 24, 24);
-        logView.setBackgroundColor(0xff101418);
-        logView.setGravity(Gravity.TOP | Gravity.START);
-        logView.setTextIsSelectable(true);
         logView.setFocusable(true);
         logView.setFocusableInTouchMode(true);
         logView.setLongClickable(true);
@@ -60,18 +58,20 @@ public class MainActivity extends Activity {
         );
         logView.setKeyListener(null);
         logView.setMovementMethod(ScrollingMovementMethod.getInstance());
+        logView.setGravity(Gravity.TOP | Gravity.START);
+        logView.setTextIsSelectable(true);
         logView.setHorizontallyScrolling(true);
         logView.setVerticalScrollBarEnabled(true);
         logView.setText("Starting Chaquopy RPC...\n");
-        ScrollView scrollView = new ScrollView(this);
-        scrollView.setFillViewport(false);
-        scrollView.setBackgroundColor(0xff101418);
+        logScrollView = new ScrollView(this);
+        logScrollView.setFillViewport(false);
+        logScrollView.setBackgroundColor(0xff101418);
         logView.setLayoutParams(new ScrollView.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT,
             ViewGroup.LayoutParams.WRAP_CONTENT
         ));
-        scrollView.addView(logView);
-        setContentView(scrollView);
+        logScrollView.addView(logView);
+        setContentView(logScrollView);
 
         logFile = new File(getFilesDir(), "rpc.log");
         startRpc();
@@ -92,6 +92,7 @@ public class MainActivity extends Activity {
         }
         instance.runOnUiThread(() -> {
             instance.logView.setBackgroundColor(parsedColor);
+            instance.logScrollView.setBackgroundColor(parsedColor);
         });
     }
 
