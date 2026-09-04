@@ -1,0 +1,50 @@
+plugins {
+    id "com.android.application"
+    id "com.chaquo.python"
+}
+
+android {
+    namespace "com.example.chaquopyrpc"
+    compileSdk 35
+
+    defaultConfig {
+        applicationId "com.example.chaquopyrpc"
+        minSdk 24
+        targetSdk 35
+        versionCode 1
+        versionName "1.0"
+
+        ndk {
+            abiFilters "arm64-v8a"
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+chaquopy {
+    defaultConfig {
+        version "3.11"
+        pip {
+            install "requests"
+        }
+    }
+}
+
+dependencies {
+    implementation "androidx.appcompat:appcompat:1.7.0"
+}
+
+configurations.configureEach {
+    resolutionStrategy.eachDependency { details ->
+        if (details.requested.group == "org.jetbrains.kotlin" &&
+                (details.requested.name == "kotlin-stdlib" ||
+                 details.requested.name == "kotlin-stdlib-jdk7" ||
+                 details.requested.name == "kotlin-stdlib-jdk8")) {
+            details.useVersion "1.8.22"
+        }
+    }
+}
