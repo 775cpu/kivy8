@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 cd "$(dirname "$0")"
+export PATH="$HOME/.local/bin:$PATH"
 
 # ---------- 解析命令行参数 ----------
 usage() {
@@ -86,8 +87,15 @@ else
     echo "No color provided, skipping icon color update (splash.png and spec)."
 fi
 
-# ---------- 检查 cmake ----------
-if ! command -v cmake &>/dev/null; then
+# ---------- 检查构建工具 ----------
+MISSING_BUILD_TOOLS=()
+for tool in cmake ninja; do
+    if ! command -v "$tool" &>/dev/null; then
+        MISSING_BUILD_TOOLS+=("$tool")
+    fi
+done
+
+if [[ ${#MISSING_BUILD_TOOLS[@]} -gt 0 ]]; then
     echo "正在配置上海时区..."
     sudo ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
     echo "Asia/Shanghai" | sudo tee /etc/timezone > /dev/null
@@ -97,10 +105,17 @@ if ! command -v cmake &>/dev/null; then
     echo 'export LC_TIME=C' >> ~/.profile
     export LC_TIME=C
 
-    # 3. 安装 cmake
-    echo "cmake 未安装，正在安装..."
-    sudo apt-get update && sudo apt-get install -y cmake
+    # 3. 安装缺失的构建工具。CMake 使用 -G Ninja，因此两者都是必需依赖。
+    echo "缺少构建工具: ${MISSING_BUILD_TOOLS[*]}，正在安装..."
+    sudo apt-get update && sudo apt-get install -y cmake ninja-build
 fi
+
+for tool in cmake ninja; do
+    if ! command -v "$tool" &>/dev/null; then
+        echo "Error: $tool 安装失败或不在 PATH 中。" >&2
+        exit 1
+    fi
+done
 
 # ---------- 修复 python-for-android 的 pip 升级冲突 ----------
 P4A_BUILD_FILE=".buildozer/android/platform/python-for-android/pythonforandroid/build.py"
@@ -285,6 +300,28 @@ run_buildozer_with_network_fallback() {
     return "$status"
 }
 
+prepare_local_p4a_repository() {
+    local p4a_dir=".buildozer/android/platform/python-for-android"
+    if [ ! -d "$p4a_dir" ]; then
+        return 0
+    fi
+    if ! git -C "$p4a_dir" config --get remote.origin.url >/dev/null 2>&1; then
+        echo "初始化本地 python-for-android 仓库元数据。"
+        git -C "$p4a_dir" init -q
+        git -C "$p4a_dir" remote add origin https://github.com/kivy/python-for-android.git
+    fi
+    if ! git -C "$p4a_dir" rev-parse --verify HEAD >/dev/null 2>&1; then
+        git -C "$p4a_dir" config user.name "Bundled python-for-android"
+        git -C "$p4a_dir" config user.email "local@invalid"
+        git -C "$p4a_dir" branch -M master
+        git -C "$p4a_dir" config branch.master.remote origin
+        git -C "$p4a_dir" config branch.master.merge refs/heads/master
+        git -C "$p4a_dir" commit --allow-empty -qm "Bundled python-for-android source"
+    elif [ "$(git -C "$p4a_dir" branch --show-current)" != "master" ]; then
+        git -C "$p4a_dir" branch -M master
+    fi
+}
+
 if [ ! -d "$NDK_ROOT" ]; then
     echo "Error: Android NDK not found at $NDK_ROOT" >&2
     for attempt in {1..5}; do
@@ -304,6 +341,8 @@ if [ ! -d "$NDK_ROOT" ]; then
         exit 1
     fi
 fi
+
+prepare_local_p4a_repository
 
 mkdir -p "$JNI_BUILD_DIR" "$JNI_LIB_DIR" "$SRC_LIB_DIR" "$ANDROID_PROJECT_DIR/src/main/assets"
 cp -f android_src/assets/yolov8n.param "$ANDROID_PROJECT_DIR/src/main/assets/yolov8n.param"
