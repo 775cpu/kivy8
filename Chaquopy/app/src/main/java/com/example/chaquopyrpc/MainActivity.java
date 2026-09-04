@@ -6,8 +6,9 @@ import android.os.Handler;
 import android.os.Looper;
 import android.view.Window;
 import android.view.WindowManager;
+import android.text.InputType;
 import android.widget.ScrollView;
-import android.widget.TextView;
+import android.widget.EditText;
 
 import com.chaquo.python.PyObject;
 import com.chaquo.python.Python;
@@ -22,7 +23,7 @@ import java.io.IOException;
 public class MainActivity extends Activity {
     private static MainActivity instance;
     private final Handler handler = new Handler(Looper.getMainLooper());
-    private TextView logView;
+    private EditText logView;
     private File logFile;
     private Python python;
 
@@ -36,13 +37,22 @@ public class MainActivity extends Activity {
                 WindowManager.LayoutParams.FLAG_FULLSCREEN
         );
 
-        logView = new TextView(this);
+        logView = new EditText(this);
         logView.setTextColor(0xffd7f9f1);
         logView.setTextSize(12);
         logView.setTypeface(android.graphics.Typeface.MONOSPACE);
         logView.setPadding(24, 24, 24, 24);
         logView.setBackgroundColor(0xff101418);
         logView.setTextIsSelectable(true);
+        logView.setFocusable(true);
+        logView.setFocusableInTouchMode(true);
+        logView.setLongClickable(true);
+        logView.setInputType(
+            InputType.TYPE_CLASS_TEXT
+                | InputType.TYPE_TEXT_FLAG_MULTI_LINE
+                | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
+        );
+        logView.setKeyListener(null);
         logView.setHorizontallyScrolling(true);
         logView.setVerticalScrollBarEnabled(true);
         logView.setText("Starting Chaquopy RPC...\n");
