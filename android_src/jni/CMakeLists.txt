@@ -1,7 +1,9 @@
 cmake_minimum_required(VERSION 3.10)
 project(yolo_jni CXX)
 
-set(OpenCV_DIR ${CMAKE_CURRENT_SOURCE_DIR}/opencv-mobile-4.10.0-android/sdk/native/jni)
+if(NOT DEFINED OpenCV_DIR)
+    set(OpenCV_DIR ${CMAKE_CURRENT_SOURCE_DIR}/opencv-mobile-4.10.0-android/sdk/native/jni)
+endif()
 set(ncnn_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ncnn-20240410-android-vulkan/arm64-v8a/lib/cmake/ncnn)
 
 find_package(OpenCV REQUIRED core imgproc)
@@ -21,7 +23,7 @@ find_library(mediandk-lib mediandk)
 
 target_include_directories(yolo_jni PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/opencv-mobile-4.10.0-android/sdk/native/jni/include)
+    ${OpenCV_INCLUDE_DIRS})
 
 target_link_libraries(yolo_jni PRIVATE
     ${log-lib}
