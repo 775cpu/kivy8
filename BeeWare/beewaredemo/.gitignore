@@ -33,7 +33,24 @@ Temporary Items
 # Distribution / packaging
 .Python
 env/
-build/
+build/*
+!build/beewaredemo/
+build/beewaredemo/*
+!build/beewaredemo/android/
+build/beewaredemo/android/*
+!build/beewaredemo/android/gradle/
+build/beewaredemo/android/gradle/*
+!build/beewaredemo/android/gradle/app/
+build/beewaredemo/android/gradle/app/*
+!build/beewaredemo/android/gradle/app/build/
+build/beewaredemo/android/gradle/app/build/*
+!build/beewaredemo/android/gradle/app/build/outputs/
+build/beewaredemo/android/gradle/app/build/outputs/*
+!build/beewaredemo/android/gradle/app/build/outputs/apk/
+build/beewaredemo/android/gradle/app/build/outputs/apk/*
+!build/beewaredemo/android/gradle/app/build/outputs/apk/debug/
+build/beewaredemo/android/gradle/app/build/outputs/apk/debug/*
+!build/beewaredemo/android/gradle/app/build/outputs/apk/debug/app-debug.apk
 develop-eggs/
 dist/
 downloads/
