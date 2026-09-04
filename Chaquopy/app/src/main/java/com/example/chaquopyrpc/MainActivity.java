@@ -10,6 +10,7 @@ import android.widget.TextView;
 
 import com.chaquo.python.PyObject;
 import com.chaquo.python.Python;
+import com.chaquo.python.android.AndroidPlatform;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
@@ -46,6 +47,9 @@ public class MainActivity extends Activity {
 
     private void startRpc() {
         try {
+            if (!Python.isStarted()) {
+                Python.start(new AndroidPlatform(this));
+            }
             python = Python.getInstance();
             PyObject module = python.getModule("app");
             module.callAttr("start", logFile.getAbsolutePath());
