@@ -17,6 +17,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
 public class MainActivity extends Activity {
+    private static MainActivity instance;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private TextView logView;
     private File logFile;
@@ -25,6 +26,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
+        instance = this;
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().setFlags(
                 WindowManager.LayoutParams.FLAG_FULLSCREEN,
@@ -43,6 +45,21 @@ public class MainActivity extends Activity {
         logFile = new File(getFilesDir(), "rpc.log");
         startRpc();
         handler.post(logPoller);
+    }
+
+    public static void setLogBackgroundColor(final String color) {
+        if (instance == null) {
+            throw new IllegalStateException("MainActivity is not running");
+        }
+        instance.runOnUiThread(() -> {
+            try {
+                instance.logView.setBackgroundColor(
+                        android.graphics.Color.parseColor(color)
+                );
+            } catch (IllegalArgumentException error) {
+                throw new RuntimeException("Invalid color: " + color, error);
+            }
+        });
     }
 
     private void startRpc() {
@@ -83,6 +100,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onDestroy() {
         handler.removeCallbacks(logPoller);
+        instance = null;
         super.onDestroy();
     }
 }
