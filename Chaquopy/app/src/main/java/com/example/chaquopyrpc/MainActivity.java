@@ -4,8 +4,11 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.text.method.ScrollingMovementMethod;
+import android.view.Gravity;
 import android.view.Window;
 import android.view.WindowManager;
+import android.view.ViewGroup;
 import android.text.InputType;
 import android.widget.ScrollView;
 import android.widget.EditText;
@@ -43,22 +46,30 @@ public class MainActivity extends Activity {
         logView.setTypeface(android.graphics.Typeface.MONOSPACE);
         logView.setPadding(24, 24, 24, 24);
         logView.setBackgroundColor(0xff101418);
+        logView.setGravity(Gravity.TOP | Gravity.START);
         logView.setTextIsSelectable(true);
         logView.setFocusable(true);
         logView.setFocusableInTouchMode(true);
         logView.setLongClickable(true);
+        logView.setCursorVisible(false);
+        logView.setSingleLine(false);
         logView.setInputType(
             InputType.TYPE_CLASS_TEXT
                 | InputType.TYPE_TEXT_FLAG_MULTI_LINE
                 | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
         );
         logView.setKeyListener(null);
+        logView.setMovementMethod(ScrollingMovementMethod.getInstance());
         logView.setHorizontallyScrolling(true);
         logView.setVerticalScrollBarEnabled(true);
         logView.setText("Starting Chaquopy RPC...\n");
         ScrollView scrollView = new ScrollView(this);
-        scrollView.setFillViewport(true);
+        scrollView.setFillViewport(false);
         scrollView.setBackgroundColor(0xff101418);
+        logView.setLayoutParams(new ScrollView.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        ));
         scrollView.addView(logView);
         setContentView(scrollView);
 
